@@ -11,50 +11,38 @@ import { open } from 'sqlite';
       driver: sqlite3.Database
     });
 
-    // 1. WEBSITES TABLE
-    console.log("\n🌐 [TABLE 1] REGISTERED WEBSITES");
+    // 1. WEBSITES
+    console.log("\n🌐 [TABLE 1] REGISTERED WEBSITES (All)");
     const websites = await db.all("SELECT id, name, baseTraffic, status FROM websites");
-    if (websites.length > 0) {
-        console.table(websites);
-    } else {
-        console.log("⚠️  (Empty) No websites found.");
-    }
+    websites.length > 0 ? console.table(websites) : console.log("⚠️  (Empty)");
 
-    // 2. TRAFFIC LOGS (The Graph Data)
-    console.log("\n📈 [TABLE 2] TRAFFIC LOGS (Last 10 Seconds)");
-    // We select specific columns to make the table readable
+    // 2. TRAFFIC LOGS
+    console.log("\n📈 [TABLE 2] TRAFFIC LOGS (Last 10 Entries)");
     const logs = await db.all(`
-        SELECT 
-            time(timestamp) as time, 
-            requests as 'Reqs/s', 
-            latency as 'Ping (ms)', 
-            error_rate as 'Err %',
-            is_anomaly as 'AI Alert?' 
-        FROM traffic_logs 
-        ORDER BY id DESC 
-        LIMIT 10
+        SELECT time(timestamp) as time, requests, latency, is_anomaly 
+        FROM traffic_logs ORDER BY id DESC LIMIT 10
     `);
-    
-    if (logs.length > 0) {
-        console.table(logs);
-        console.log("   (This data is what draws the Green/Red lines on your Dashboard)");
-    } else {
-        console.log("⚠️  (Empty) No traffic data yet. Run the bot!");
-    }
+    logs.length > 0 ? console.table(logs) : console.log("⚠️  (Empty)");
 
-    // 3. BLOCKED IPS (The AI Decisions)
-    console.log("\n🚫 [TABLE 3] ACTIVE FIREWALL RULES");
-    const blocks = await db.all("SELECT ip_address, banned_at, reason FROM blocked_ips ORDER BY id DESC LIMIT 10");
-    
-    if (blocks.length > 0) {
-        console.table(blocks);
-    } else {
-        console.log("✅ (Clean) No IPs are currently blocked.");
-    }
+    // 3. BLOCKED IPS
+    console.log("\n🚫 [TABLE 3] FIREWALL RULES (Last 10 Blocks)");
+    const blocks = await db.all("SELECT ip_address, reason, time(banned_at) as time FROM blocked_ips ORDER BY id DESC LIMIT 10");
+    blocks.length > 0 ? console.table(blocks) : console.log("✅ (Clean)");
+
+    // 4. ALERTS
+    console.log("\n🚨 [TABLE 4] PERSISTENT ALERTS (Last 10 Alerts)");
+    const alerts = await db.all("SELECT website_name, severity, message, time(timestamp) as time FROM alerts ORDER BY timestamp DESC LIMIT 10");
+    alerts.length > 0 ? console.table(alerts) : console.log("✅ (No Alerts)");
+
+    // 5. USERS (New!)
+    console.log("\n👤 [TABLE 5] REGISTERED USERS");
+    // We select id and email. (Password is hashed/stored, usually better not to print raw pass if encrypted)
+    const users = await db.all("SELECT id, email, password FROM users");
+    users.length > 0 ? console.table(users) : console.log("⚠️  (No Users Found)");
 
     console.log("\n================================================");
 
   } catch (err) {
-    console.error("❌ Error reading DB:", err);
+    console.error("❌ Error:", err);
   }
 })();

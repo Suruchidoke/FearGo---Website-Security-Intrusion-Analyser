@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Shield, LayoutDashboard, Globe, AlertTriangle, Menu, X, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-// 1. Removed 'simulate' from Page type
 type Page = 'dashboard' | 'websites' | 'alerts';
 
 interface NavigationProps {
@@ -13,7 +12,16 @@ interface NavigationProps {
 export function Navigation({ currentPage, onPageChange }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // 2. Removed the Simulate Attack object from navItems
+  // --- 1. THE LOGOUT LOGIC ---
+  const handleLogout = () => {
+    // A. Remove the authentication key (Must match the one in App.tsx)
+    localStorage.removeItem('cyber_auth');
+    localStorage.removeItem('cyber_current_page');
+    
+    // B. Force a hard refresh to take the user back to the Login Screen
+    window.location.href = '/';
+  };
+
   const navItems = [
     { id: 'dashboard' as Page, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'websites' as Page, label: 'Websites', icon: Globe },
@@ -27,7 +35,7 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
 
   return (
     <div className="relative">
-      {/* Mobile Menu Button - Fixed Position */}
+      {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 rounded-xl bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-colors"
@@ -58,7 +66,7 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        {/* Logo/Header */}
+        {/* Header */}
         <div className="p-6 border-b-2 border-gray-200">
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -78,12 +86,11 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
           </div>
         </div>
 
-        {/* Navigation Items */}
+        {/* Links */}
         <div className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
-            
             return (
               <button
                 key={item.id}
@@ -108,19 +115,12 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
                 <span className={`font-medium relative z-10 ${isActive ? 'text-white' : 'text-gray-700 group-hover:text-gray-900'}`}>
                   {item.label}
                 </span>
-                {isActive && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="ml-auto w-2 h-2 rounded-full bg-white relative z-10"
-                  />
-                )}
               </button>
             );
           })}
         </div>
 
-        {/* System Status Card */}
+        {/* Footer & Logout */}
         <div className="p-4 border-t-2 border-gray-200">
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
             <div className="flex items-center gap-3 mb-2">
@@ -147,8 +147,11 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
             </div>
           </div>
 
-          {/* Logout Button */}
-          <button className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all border-2 border-gray-200 hover:border-red-200">
+          {/* 👇 THIS WAS MISSING THE onClick HANDLER 👇 */}
+          <button 
+            onClick={handleLogout} 
+            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all border-2 border-gray-200 hover:border-red-200"
+          >
             <LogOut className="w-4 h-4" />
             <span className="text-sm font-medium">Sign Out</span>
           </button>

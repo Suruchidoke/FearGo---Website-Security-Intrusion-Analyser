@@ -265,6 +265,50 @@ app.post('/api/send-alert-email', async (req, res) => {
     }
 });
 
+// ... existing imports and code ...
+
+// 8. USER LOGIN / REGISTER ENDPOINT
+app.post('/api/login', async (req, res) => {
+  const { email, password, domain } = req.body;
+  const db = await getDb();
+
+  try {
+    // 1. Check if user exists
+    const user = await db.get('SELECT * FROM users WHERE email = ?', email);
+
+    if (user) {
+      // EXISTING USER: Check Password
+      // (In a real app, use bcrypt here. For demo, we compare plain text)
+      if (user.password === password) {
+        return res.json({ success: true, message: 'Welcome back!', userId: user.id });
+      } else {
+        return res.status(401).json({ success: false, error: 'Incorrect password' });
+      }
+    } else {
+      // NEW USER: Auto-Register
+      const result = await db.run(
+        'INSERT INTO users (email, password) VALUES (?, ?)',
+        [email, password]
+      );
+      
+      // Auto-add their website if provided
+      if (domain) {
+        const siteId = Date.now().toString();
+        await db.run(
+          'INSERT INTO websites (id, name, category, baseTraffic) VALUES (?, ?, ?, ?)',
+          [siteId, domain, 'Business', 100]
+        );
+      }
+
+      return res.json({ success: true, message: 'Account created!', userId: result.lastID });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ... app.listen code ...
+
 io.on('connection', (socket) => {
   socket.emit('init-stats', Object.values(websiteStats));
 });
